@@ -1,6 +1,8 @@
 package systembatarka.com.batarka.app.batarkasystem;
 
+import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -8,6 +10,7 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -18,14 +21,28 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ListView;
+import android.widget.Toast;
 
+import com.firebase.client.DataSnapshot;
+import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
+import com.firebase.client.Query;
+import com.firebase.client.ValueEventListener;
 import com.google.android.gms.common.api.GoogleApiClient;
+
+import java.util.ArrayList;
+
+import systembatarka.com.batarka.app.batarkasystem.Adapters.KashfFaslAdapter;
+import systembatarka.com.batarka.app.batarkasystem.Data.m5dumData;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+    private static String myClass;
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private TabLayout tabLayout;
-
+    public static Firebase myFirebaseRef;
     public static boolean onOpen;
     public  FloatingActionButton fab;
     /**
@@ -48,7 +65,8 @@ public class MainActivity extends AppCompatActivity
         tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-
+        Firebase.setAndroidContext(this);
+        myFirebaseRef = new Firebase("https://batarkasystem.firebaseio.com/");
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -57,6 +75,9 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+        final SharedPreferences sharedPref =  getApplicationContext().getSharedPreferences("SharedPreference", Activity.MODE_PRIVATE);
+        final SharedPreferences.Editor editor = sharedPref.edit();
+        myClass=sharedPref.getString("Class","");
 
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -92,12 +113,12 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-/*
-        if (id == R.id.nav_2015) {
-            LoginActivity.counter = 0;
-            Intent in = new Intent(MainActivity.this, year2015.class);
-            startActivity(in);
 
+        if (id == R.id.nav_camera) {
+               Intent intent = new Intent(MainActivity.this,ScanAttendance.class);
+                   startActivity(intent);
+        }
+/*
         } else if (id == R.id.nav_2016) {
             LoginActivity.counter = 0;
             Intent mainIntent = new Intent(MainActivity.this, yearNew.class);
@@ -118,17 +139,22 @@ public class MainActivity extends AppCompatActivity
             if (intent.resolveActivity(getPackageManager()) != null) {
                 startActivity(intent);
             }
+        }*/
+            DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+            drawer.closeDrawer(GravityCompat.START);
+            return true;
         }
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);*/
-        return true;
-    }
 
 
     public static class PlaceholderFragment extends Fragment {
         View rootView;
         public static View rootView1;
         FloatingActionButton fab;
+        Query queryRef;
+        DataSnapshot myChild;
+        public static ArrayList<m5dumData> kashfFaslList;
+        public static KashfFaslAdapter myAdapter;
+        public static ListView ls;
         private static final String ARG_SECTION_NUMBER = "section_number";
        public PlaceholderFragment() {
         }
@@ -151,20 +177,80 @@ public class MainActivity extends AppCompatActivity
                                  final Bundle savedInstanceState) {
             if (getArguments().getInt(ARG_SECTION_NUMBER) == 1) {
                 View rootView = inflater.inflate(R.layout.content_main, container, false);
+                ls = (ListView) rootView.findViewById(R.id.listView3);
                 return rootView;
             } else if (getArguments().getInt(ARG_SECTION_NUMBER) == 2) {
-                rootView1 = inflater.inflate(R.layout.kashfy_layout,container,false);
+                rootView1 = inflater.inflate(R.layout.kashfy_layout, container, false);
+                ls = (ListView) rootView1.findViewById(R.id.listView2);
                 fab = (FloatingActionButton) rootView1.findViewById(R.id.fab);
                 fab.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Intent intent = new Intent(rootView1.getContext(),Add_M5dumin.class);
+                        Intent intent = new Intent(rootView1.getContext(), Add_M5dumin.class);
                         startActivity(intent);
                     }
                 });
+                queryRef = myFirebaseRef.child("Classes").child(myClass).child("m5dumin");
+                Toast.makeText(rootView1.getContext(),myClass,Toast.LENGTH_LONG).show();
+                queryRef.addValueEventListener(new ValueEventListener() {
+
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        kashfFaslList = new ArrayList<m5dumData>();
+                        long size = dataSnapshot.getChildrenCount();
+                        Iterable<DataSnapshot> myChildren = dataSnapshot.getChildren();
+                        final SharedPreferences sharedPref = ((Activity) rootView1.getContext()).getSharedPreferences("SharedPreference", Activity.MODE_PRIVATE);
+                        final SharedPreferences.Editor editor = sharedPref.edit();
+
+                        while (myChildren.iterator().hasNext()) {
+                            int i = 0;
+                            myChild = myChildren.iterator().next();
+
+                            m5dumData myM5dumData = new m5dumData(myChild.child("Name").getValue().toString(),
+                                    myChild.child("Photo").getValue().toString(), myChild.child("Address").getValue().toString(),
+                                    myChild.child("FloorNo").getValue().toString(), myChild.child("FlatNo").getValue().toString(),
+                                    myChild.child("Mobile").getValue().toString(), myChild.child("Phone").getValue().toString(),
+                                    myChild.child("FatherMob").getValue().toString(), myChild.child("MotherMob").getValue().toString(),
+                                    myChild.child("Points").getValue().toString(), myChild.child("DOB").getValue().toString());
+                            kashfFaslList.add(myM5dumData);
+
+                            editor.putBoolean("" + i, sharedPref.getBoolean("" + i, false));
+                            editor.commit();
+                            i++;
+                        }
+                        myAdapter = new KashfFaslAdapter(kashfFaslList, (Activity) rootView1.getContext());
+                        ls.setAdapter(myAdapter);
+                        ls.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                            @Override
+                            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                                Intent intent = new Intent(rootView1.getContext(), M5dumDetails.class);
+                                intent.putExtra("Name",myAdapter.list.get(i).getM5dumName());
+                                intent.putExtra("Address",myAdapter.list.get(i).getM5dumAddress());
+                                intent.putExtra("DOB",myAdapter.list.get(i).getDob());
+                                intent.putExtra("FatherMob",myAdapter.list.get(i).getM5dumFatherMob());
+                                intent.putExtra("FlatNo",myAdapter.list.get(i).getM5dumFlatNo());
+                                intent.putExtra("FloorNo",myAdapter.list.get(i).getM5dumFloorNo());
+                                intent.putExtra("Mobile",myAdapter.list.get(i).getM5dumMobile());
+                                intent.putExtra("MotherMob",myAdapter.list.get(i).getM5dumMotherMob());
+                                intent.putExtra("Phone",myAdapter.list.get(i).getM5dumPhone());
+                                intent.putExtra("Photo",myAdapter.list.get(i).getM5dumPhoto());
+                                intent.putExtra("Points",myAdapter.list.get(i).getM5dumPoints());
+
+                                startActivity(intent);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onCancelled(FirebaseError firebaseError) {
+
+                    }
+
+                });
+
                 return rootView1;
             }
-            return null;
+                return null;
         }
 
 
@@ -238,6 +324,19 @@ public class MainActivity extends AppCompatActivity
                     return "كشف الفصل";
             }
             return null;
+        }
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 0) {
+
+            if (resultCode == RESULT_OK) {
+                String contents = data.getStringExtra("SCAN_RESULT");
+            }
+            if(resultCode == RESULT_CANCELED){
+                //handle cancel
+            }
         }
     }
 }
