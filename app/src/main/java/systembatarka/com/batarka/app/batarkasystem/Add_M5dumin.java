@@ -180,7 +180,7 @@ public class Add_M5dumin extends AppCompatActivity {
                     myFirebaseRef.child("Classes").child(myClass).child("m5dumin").child(m5dumID+"").child("Phone").setValue(m5dumPhone.getText().toString());
                     myFirebaseRef.child("Classes").child(myClass).child("m5dumin").child(m5dumID+"").child("FatherMob").setValue(m5dumFatherMob.getText().toString());
                     myFirebaseRef.child("Classes").child(myClass).child("m5dumin").child(m5dumID+"").child("MotherMob").setValue(m5dumMotherMob.getText().toString());
-                    myFirebaseRef.child("Classes").child(myClass).child("m5dumin").child(m5dumID+"").child("Points").setValue(0);
+                    myFirebaseRef.child("Classes").child(myClass).child("m5dumin").child(m5dumID+"").child("Points").child("PointsTotal").setValue(0);
                     myFirebaseRef.child("Classes").child(myClass).child("m5dumin").child(m5dumID+"").child("DOB").setValue(m5dumMilad.getDayOfMonth()+"/"
                             +(m5dumMilad.getMonth()+1)+"/"+m5dumMilad.getYear());
                     myFirebaseRef.child("Classes").child(myClass).child("m5dumin").child(m5dumID+"").child("Photo").setValue(imageInBase64);

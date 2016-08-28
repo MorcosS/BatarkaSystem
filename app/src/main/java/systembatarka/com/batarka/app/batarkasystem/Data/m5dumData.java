@@ -5,10 +5,14 @@ package systembatarka.com.batarka.app.batarkasystem.Data;
  */
 public class m5dumData {
     String m5dumName, m5dumPhoto, m5dumAddress, m5dumFloorNo,m5dumFlatNo,m5dumMobile,m5dumPhone,m5dumFatherMob
-            ,m5dumMotherMob,m5dumPoints,dob;
+            ,m5dumMotherMob,m5dumPoints,dob,m5dumID;
+
+    public String getM5dumID() {
+        return m5dumID;
+    }
 
     public m5dumData(String m5dumName, String m5dumPhoto, String m5dumAddress, String m5dumFloorNo, String m5dumFlatNo,
-                     String m5dumMobile, String m5dumPhone, String m5dumFatherMob, String m5dumMotherMob, String m5dumPoints, String dob) {
+                     String m5dumMobile, String m5dumPhone, String m5dumFatherMob, String m5dumMotherMob, String m5dumPoints, String dob, String m5dumID) {
         this.m5dumName = m5dumName;
         this.m5dumPhoto = m5dumPhoto;
         this.m5dumAddress = m5dumAddress;
@@ -20,7 +24,7 @@ public class m5dumData {
         this.m5dumMotherMob = m5dumMotherMob;
         this.m5dumPoints = m5dumPoints;
         this.dob = dob;
-
+        this.m5dumID = m5dumID;
     }
 
 

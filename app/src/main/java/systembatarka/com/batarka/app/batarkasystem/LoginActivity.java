@@ -24,6 +24,8 @@ import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.Query;
 import com.firebase.client.ValueEventListener;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -52,11 +54,11 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Firebase.setAndroidContext(this);
         setContentView(R.layout.activity_login);
         // Set up the login form.
+Firebase.setAndroidContext(this);
+        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
         size = 0;
-        final Firebase myFirebase = new Firebase("https://batarkasystem.firebaseio.com");
         res = getResources();
         SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("SharedPreference", Activity.MODE_PRIVATE);
         final SharedPreferences.Editor editor = sharedPref.edit();
@@ -67,6 +69,9 @@ public class LoginActivity extends AppCompatActivity {
             LoginActivity.this.finish();
         } else {
             counter = 0;
+            final Firebase myFirebase = new Firebase("https://batarkasystem.firebaseio.com");
+            DatabaseReference scoresRef = FirebaseDatabase.getInstance().getReference("5udamID");
+            scoresRef.keepSynced(true);
             Query queryRef = myFirebase.child("5udamID");
             queryRef.addValueEventListener(new ValueEventListener() {
                 @Override

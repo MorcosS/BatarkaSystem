@@ -22,24 +22,28 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
+import android.widget.Spinner;
 
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
 import com.firebase.client.Query;
-import com.firebase.client.ValueEventListener;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import systembatarka.com.batarka.app.batarkasystem.Adapters.KashfFaslAdapter;
+import systembatarka.com.batarka.app.batarkasystem.Data.FireBaseDB;
 import systembatarka.com.batarka.app.batarkasystem.Data.m5dumData;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
-    private static String myClass;
+    public static String myClass,myDate;
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private TabLayout tabLayout;
     public static Firebase myFirebaseRef;
@@ -62,9 +66,10 @@ public class MainActivity extends AppCompatActivity
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
-        tabLayout = (TabLayout) findViewById(R.id.tabs);
+        tabLayout = (TabLayout) findViewById(R.id.tablayout);
         tabLayout.setupWithViewPager(mViewPager);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         Firebase.setAndroidContext(this);
         myFirebaseRef = new Firebase("https://batarkasystem.firebaseio.com/");
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -78,7 +83,7 @@ public class MainActivity extends AppCompatActivity
         final SharedPreferences sharedPref =  getApplicationContext().getSharedPreferences("SharedPreference", Activity.MODE_PRIVATE);
         final SharedPreferences.Editor editor = sharedPref.edit();
         myClass=sharedPref.getString("Class","");
-
+        myDate = sharedPref.getString("LastWeekDate","");
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -114,7 +119,7 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
+        if (id == R.id.nav_attend) {
                Intent intent = new Intent(MainActivity.this,ScanAttendance.class);
                    startActivity(intent);
         }
@@ -147,14 +152,20 @@ public class MainActivity extends AppCompatActivity
 
 
     public static class PlaceholderFragment extends Fragment {
-        View rootView;
-        public static View rootView1;
+        View rootView1,rootView;
         FloatingActionButton fab;
         Query queryRef;
-        DataSnapshot myChild;
-        public static ArrayList<m5dumData> kashfFaslList;
-        public static KashfFaslAdapter myAdapter;
-        public static ListView ls;
+        com.google.firebase.database.DataSnapshot myChild,myChild2;
+        DataSnapshot  myChild1;
+        public static ArrayList<m5dumData> kashfFaslList,attendanceList;
+        public static List<String> weeksList;
+        public static KashfFaslAdapter myAdapter,myAdapter1;
+        public static ListView ls,ls1;
+        ArrayList<Integer> list;
+        boolean attendance;
+        FireBaseDB fireBaseDB;
+        Spinner spinner;
+        DatabaseReference m5dumRef,attendanceRef;
         private static final String ARG_SECTION_NUMBER = "section_number";
        public PlaceholderFragment() {
         }
@@ -175,13 +186,47 @@ public class MainActivity extends AppCompatActivity
         @Override
         public View onCreateView(final LayoutInflater inflater, final ViewGroup container,
                                  final Bundle savedInstanceState) {
+            m5dumRef = FirebaseDatabase.getInstance().getReference("Classes").child(myClass).child("m5dumin");
+            m5dumRef.keepSynced(true);
+            attendanceRef = FirebaseDatabase.getInstance().getReference("Classes").child(myClass).child("Attendance");
+            attendanceRef.keepSynced(true);
+            rootView = inflater.inflate(R.layout.content_main, container, false);
+            rootView1 = inflater.inflate(R.layout.kashfy_layout, container, false);
+            fireBaseDB = new FireBaseDB(rootView.getContext());
+            attendanceList = new ArrayList<m5dumData>();
+            spinner = (Spinner) rootView.findViewById(R.id.spinner3);
+
             if (getArguments().getInt(ARG_SECTION_NUMBER) == 1) {
-                View rootView = inflater.inflate(R.layout.content_main, container, false);
+                weeksList = new ArrayList<String>();
                 ls = (ListView) rootView.findViewById(R.id.listView3);
+                weeksList.add("16-8-2016");
+                weeksList.add("19-6-2016");
+                ArrayAdapter<String> adapter =new ArrayAdapter<String>(rootView.getContext(),
+                        android.R.layout.simple_spinner_dropdown_item,weeksList);
+// Specify the layout to use when the list of choices appears
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+// Apply the adapter to the spinner
+                spinner.setAdapter(adapter);
+spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        ArrayList <Integer> arrayList = fireBaseDB.getAbsence("19-8-2016");
+        for(int j =0;j<arrayList.size();j++){
+            attendanceList.add(fireBaseDB.getM5dum(arrayList.get(j)));
+        }
+        myAdapter1 = new KashfFaslAdapter(attendanceList,(Activity) rootView.getContext());
+        ls.setAdapter(myAdapter1);
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> adapterView) {
+
+    }
+});
                 return rootView;
             } else if (getArguments().getInt(ARG_SECTION_NUMBER) == 2) {
-                rootView1 = inflater.inflate(R.layout.kashfy_layout, container, false);
-                ls = (ListView) rootView1.findViewById(R.id.listView2);
+                attendance=false;
+                ls1 = (ListView) rootView1.findViewById(R.id.listView2);
                 fab = (FloatingActionButton) rootView1.findViewById(R.id.fab);
                 fab.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -190,62 +235,63 @@ public class MainActivity extends AppCompatActivity
                         startActivity(intent);
                     }
                 });
-                queryRef = myFirebaseRef.child("Classes").child(myClass).child("m5dumin");
-                Toast.makeText(rootView1.getContext(),myClass,Toast.LENGTH_LONG).show();
-                queryRef.addValueEventListener(new ValueEventListener() {
-
+               DatabaseReference m5dumIDRef = FirebaseDatabase.getInstance().getReference("Classes").child(myClass).child("m5dumIDs");
+                m5dumIDRef.keepSynced(true);
+                m5dumRef.addValueEventListener(new com.google.firebase.database.ValueEventListener() {
                     @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
+                    public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
+
                         kashfFaslList = new ArrayList<m5dumData>();
-                        long size = dataSnapshot.getChildrenCount();
-                        Iterable<DataSnapshot> myChildren = dataSnapshot.getChildren();
                         final SharedPreferences sharedPref = ((Activity) rootView1.getContext()).getSharedPreferences("SharedPreference", Activity.MODE_PRIVATE);
                         final SharedPreferences.Editor editor = sharedPref.edit();
-
+                        Iterable<com.google.firebase.database.DataSnapshot> myChildren = dataSnapshot.getChildren();
                         while (myChildren.iterator().hasNext()) {
-                            int i = 0;
-                            myChild = myChildren.iterator().next();
+                                int i = 0;
+                                myChild = myChildren.iterator().next();
+try {
+    m5dumData myM5dumData = new m5dumData(myChild.child("Name").getValue().toString(),
+            myChild.child("Photo").getValue().toString(), myChild.child("Address").getValue().toString(),
+            myChild.child("FloorNo").getValue().toString(), myChild.child("FlatNo").getValue().toString(),
+            myChild.child("Mobile").getValue().toString(), myChild.child("Phone").getValue().toString(),
+            myChild.child("FatherMob").getValue().toString(), myChild.child("MotherMob").getValue().toString(),
+            myChild.child("Points").child("PointsTotal").getValue().toString(), myChild.child("DOB").getValue().toString(), myChild.getKey().toString());
+    kashfFaslList.add(myM5dumData);
 
-                            m5dumData myM5dumData = new m5dumData(myChild.child("Name").getValue().toString(),
-                                    myChild.child("Photo").getValue().toString(), myChild.child("Address").getValue().toString(),
-                                    myChild.child("FloorNo").getValue().toString(), myChild.child("FlatNo").getValue().toString(),
-                                    myChild.child("Mobile").getValue().toString(), myChild.child("Phone").getValue().toString(),
-                                    myChild.child("FatherMob").getValue().toString(), myChild.child("MotherMob").getValue().toString(),
-                                    myChild.child("Points").getValue().toString(), myChild.child("DOB").getValue().toString());
-                            kashfFaslList.add(myM5dumData);
+    editor.putBoolean("" + i, sharedPref.getBoolean("" + i, false));
+    editor.commit();
+    i++;
+}catch (Exception e){
 
-                            editor.putBoolean("" + i, sharedPref.getBoolean("" + i, false));
-                            editor.commit();
-                            i++;
-                        }
-                        myAdapter = new KashfFaslAdapter(kashfFaslList, (Activity) rootView1.getContext());
-                        ls.setAdapter(myAdapter);
-                        ls.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                            @Override
-                            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                                Intent intent = new Intent(rootView1.getContext(), M5dumDetails.class);
-                                intent.putExtra("Name",myAdapter.list.get(i).getM5dumName());
-                                intent.putExtra("Address",myAdapter.list.get(i).getM5dumAddress());
-                                intent.putExtra("DOB",myAdapter.list.get(i).getDob());
-                                intent.putExtra("FatherMob",myAdapter.list.get(i).getM5dumFatherMob());
-                                intent.putExtra("FlatNo",myAdapter.list.get(i).getM5dumFlatNo());
-                                intent.putExtra("FloorNo",myAdapter.list.get(i).getM5dumFloorNo());
-                                intent.putExtra("Mobile",myAdapter.list.get(i).getM5dumMobile());
-                                intent.putExtra("MotherMob",myAdapter.list.get(i).getM5dumMotherMob());
-                                intent.putExtra("Phone",myAdapter.list.get(i).getM5dumPhone());
-                                intent.putExtra("Photo",myAdapter.list.get(i).getM5dumPhoto());
-                                intent.putExtra("Points",myAdapter.list.get(i).getM5dumPoints());
-
-                                startActivity(intent);
+}
                             }
-                        });
-                    }
+                            myAdapter = new KashfFaslAdapter(kashfFaslList, (Activity) rootView1.getContext());
+                            ls1.setAdapter(myAdapter);
+                            ls1.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                                    Intent intent = new Intent(rootView1.getContext(), M5dumDetails.class);
+                                    intent.putExtra("Name", myAdapter.list.get(i).getM5dumName());
+                                    intent.putExtra("Address", myAdapter.list.get(i).getM5dumAddress());
+                                    intent.putExtra("DOB", myAdapter.list.get(i).getDob());
+                                    intent.putExtra("FatherMob", myAdapter.list.get(i).getM5dumFatherMob());
+                                    intent.putExtra("FlatNo", myAdapter.list.get(i).getM5dumFlatNo());
+                                    intent.putExtra("FloorNo", myAdapter.list.get(i).getM5dumFloorNo());
+                                    intent.putExtra("Mobile", myAdapter.list.get(i).getM5dumMobile());
+                                    intent.putExtra("MotherMob", myAdapter.list.get(i).getM5dumMotherMob());
+                                    intent.putExtra("Phone", myAdapter.list.get(i).getM5dumPhone());
+                                    intent.putExtra("Photo", myAdapter.list.get(i).getM5dumPhoto());
+                                    intent.putExtra("Points", myAdapter.list.get(i).getM5dumPoints());
+
+                                    startActivity(intent);
+                                }
+                            });
+                        }
+
 
                     @Override
-                    public void onCancelled(FirebaseError firebaseError) {
+                    public void onCancelled(DatabaseError databaseError) {
 
                     }
-
                 });
 
                 return rootView1;

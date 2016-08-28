@@ -3,25 +3,29 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/nav_camera"
-            android:icon="@drawable/ic_menu_camera"
-            android:title="الحضور" />
+            android:id="@+id/nav_taraneem"
+            android:icon="@drawable/ic_music_note_black_24dp"
+            android:title="الترانيم" />
         <item
-            android:id="@+id/nav_gallery"
-            android:icon="@drawable/ic_menu_gallery"
+            android:id="@+id/nav_attend"
+            android:icon="@drawable/church"
+            android:title="attendance" />
+        <item
+            android:id="@+id/nav_tanawol"
+            android:icon="@drawable/wine_and_bread"
             android:title="التناول" />
         <item
-            android:id="@+id/nav_slideshow"
-            android:icon="@drawable/ic_menu_slideshow"
+            android:id="@+id/nav_nota"
+            android:icon="@drawable/ic_chrome_reader_mode_black_24dp"
             android:title="النوتة" />
         <item
-            android:id="@+id/nav_manage"
-            android:icon="@drawable/ic_menu_manage"
+            android:id="@+id/nav_tgawob"
+            android:icon="@drawable/ic_pan_tool_black_24dp"
             android:title="التجاوب" />
 
         <item
             android:id="@+id/nav_excelence"
-            android:icon="@drawable/ic_menu_manage"
+            android:icon="@drawable/ic_grade_black_24dp"
             android:title="التميز" />
 
 

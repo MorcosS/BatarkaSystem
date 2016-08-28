@@ -9,5 +9,6 @@
         android:layout_height="wrap_content"
         android:id="@+id/listView2"
         android:layout_weight="1"
+        android:scrollbarThumbHorizontal="@drawable/ic_menu_send"
         />
 </LinearLayout>
